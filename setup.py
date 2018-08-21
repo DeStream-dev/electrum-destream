@@ -1,18 +1,24 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # python setup.py sdist --format=zip,gztar
 
-from setuptools import setup
+from setuptools import setup, find_packages
 import os
 import sys
 import platform
 import imp
 import argparse
 
-version = imp.load_source('version', 'lib/version.py')
+with open('contrib/requirements/requirements.txt') as f:
+    requirements = f.read().splitlines()
 
-if sys.version_info[:3] < (2, 7, 0):
-    sys.exit("Error: Electrum requires Python version >= 2.7.0...")
+with open('contrib/requirements/requirements-hw.txt') as f:
+    requirements_hw = f.read().splitlines()
+
+version = imp.load_source('version', 'electrum/version.py')
+
+if sys.version_info[:3] < (3, 4, 0):
+    sys.exit("Error: Electrum requires Python version >= 3.4.0...")
 
 data_files = []
 
@@ -21,64 +27,53 @@ if platform.system() in ['Linux', 'FreeBSD', 'DragonFly']:
     parser.add_argument('--root=', dest='root_path', metavar='dir', default='/')
     opts, _ = parser.parse_known_args(sys.argv[1:])
     usr_share = os.path.join(sys.prefix, "share")
+    icons_dirname = 'pixmaps'
     if not os.access(opts.root_path + usr_share, os.W_OK) and \
        not os.access(opts.root_path, os.W_OK):
+        icons_dirname = 'icons'
         if 'XDG_DATA_HOME' in os.environ.keys():
             usr_share = os.environ['XDG_DATA_HOME']
         else:
             usr_share = os.path.expanduser('~/.local/share')
     data_files += [
-        (os.path.join(usr_share, 'applications/'), ['electrum-stratis.desktop']),
-        (os.path.join(usr_share, 'pixmaps/'), ['icons/electrum-stratis.png'])
+        (os.path.join(usr_share, 'applications/'), ['electrum.desktop']),
+        (os.path.join(usr_share, icons_dirname), ['icons/electrum.png'])
     ]
 
+extras_require = {
+    'hardware': requirements_hw,
+    'fast': ['pycryptodomex'],
+}
+extras_require['full'] = extras_require['hardware'] + extras_require['fast']
+
+
 setup(
-    name="Electrum-Stratis",
+    name="Electrum",
     version=version.ELECTRUM_VERSION,
-    install_requires=[
-        'slowaes>=0.1a1',
-        'ecdsa>=0.9',
-        'pbkdf2',
-        'requests',
-        'qrcode',
-        'protobuf',
-        'dnspython',
-        'jsonrpclib',
-    ],
+    install_requires=requirements,
+    extras_require=extras_require,
     packages=[
-        'electrum_stratis',
-        'electrum_stratis_gui',
-        'electrum_stratis_gui.qt',
-        'electrum_stratis_plugins',
-        'electrum_stratis_plugins.audio_modem',
-        'electrum_stratis_plugins.cosigner_pool',
-        'electrum_stratis_plugins.email_requests',
-        'electrum_stratis_plugins.exchange_rate',
-        'electrum_stratis_plugins.hw_wallet',
-        'electrum_stratis_plugins.keepkey',
-        'electrum_stratis_plugins.labels',
-        'electrum_stratis_plugins.ledger',
-        'electrum_stratis_plugins.plot',
-        'electrum_stratis_plugins.trezor',
-        'electrum_stratis_plugins.virtualkeyboard',
-    ],
+        'electrum',
+        'gui',
+        'gui.qt',
+        'plugins',
+    ] + [('plugins.'+pkg) for pkg in find_packages('plugins')],
     package_dir={
-        'electrum_stratis': 'lib',
-        'electrum_stratis_gui': 'gui',
-        'electrum_stratis_plugins': 'plugins',
+        'electrum': 'electrum'
     },
     package_data={
-        'electrum_stratis': [
-            'www/index.html',
+        '': ['*.txt', '*.json', '*.ttf', '*.otf'],
+        'electrum': [
             'wordlist/*.txt',
             'locale/*/LC_MESSAGES/electrum.mo',
-        ]
+        ],
     },
-    scripts=['electrum-stratis'],
+    scripts=['electrum/electrum'],
     data_files=data_files,
-    description="Lightweight Stratis Wallet",
-    author="dev0tion",
+    description="Lightweight Bitcoin Wallet",
+    author="Thomas Voegtlin",
+    author_email="thomasv@electrum.org",
     license="MIT Licence",
-    url="http://www.stratisplatform.com",
-    long_description="""Lightweight Stratis Wallet"""
+    url="https://electrum.org",
+    long_description="""Lightweight Bitcoin Wallet"""
 )
