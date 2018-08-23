@@ -1,3 +1,0 @@
-electrum
-gui
-plugins
