@@ -105,6 +105,8 @@ from electrum_stratis.commands import get_parser, known_commands, Commands, conf
 from electrum_stratis import daemon
 from electrum_stratis import keystore
 from electrum_stratis.mnemonic import Mnemonic
+from electrum_stratis import network
+from electrum_stratis import stratis
 
 # get password routine
 def prompt_password(prompt, confirm=True):

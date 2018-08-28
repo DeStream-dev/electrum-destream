@@ -10,7 +10,6 @@ Electrum_Stratis.egg-info/
 env/
 packages
 *_trial_temp
-*.pyc
 *.swp
 *.egg/
 /electrum.py
